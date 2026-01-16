@@ -379,6 +379,9 @@ func (a *sessionAgent) Run(ctx context.Context, call SessionAgentCall) (*fantasy
 			}
 			a.updateSessionUsage(largeModel, &updatedSession, stepResult.Usage, a.openrouterCost(stepResult.ProviderMetadata))
 			_, sessionErr := a.sessions.Save(genCtx, updatedSession)
+			// Sync local cache to persisted tokens for accurate summarization checks.
+			// Without this, StopWhen condition would use stale token counts, preventing auto-summarization (issue #1750).
+			currentSession = updatedSession
 			sessionLock.Unlock()
 			if sessionErr != nil {
 				return sessionErr
